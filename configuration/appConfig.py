@@ -6,4 +6,4 @@ def getConfig():
 	# return configDict['user'], configDict['pass'], configDict['server']
 	return configDict['conStr'], configDict['localDb']
 
-print(getConfig())
+# print(getConfig())
