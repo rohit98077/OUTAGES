@@ -2,4 +2,4 @@ data/
 *.txt
 *.csv
 *.xlsx
-.vscode
+.vscode/*

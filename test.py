@@ -1,3 +1,4 @@
+from src.appConfig import getConfig
 def time_formatter(string):
 	if string:
 		if '.' in string:
@@ -21,6 +22,7 @@ def time_formatter(string):
 # print(time_formatter(''))
 # print(time_formatter('10'))
 # lst=list(range(19373))
+print(getConfig())
 
 length=19373
 batchSize=1000

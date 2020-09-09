@@ -2,7 +2,7 @@ import cx_Oracle
 import pandas as pd
 import datetime as dt
 import numpy as np
-from config.appConfig import getConfig
+from src.appConfig import getConfig
 
 def time_formatter(string):
 	if string:
