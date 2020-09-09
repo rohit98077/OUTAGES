@@ -90,23 +90,23 @@ def getOwnersForAcTransLineCktIds(reportsConnStr, ids):
 
     # connect to reports database
     # con = cx_Oracle.connect(reportsConnStr)
-    fetchSql = '''select ckt.id as ckt_id,
+    fetchSql = '''SELECT ckt.id AS ckt_id,
                     owner_details.owners
-                from REPORTING_WEB_UI_UAT.ac_transmission_line_circuit ckt
-                    left join REPORTING_WEB_UI_UAT.ac_trans_line_master ac_line on ckt.line_id = ac_line.id
-                    left join (
-                        select LISTAGG(own.owner_name, ',') WITHIN GROUP (
+                FROM REPORTING_WEB_UI_UAT.ac_transmission_line_circuit ckt
+                    LEFT JOIN REPORTING_WEB_UI_UAT.ac_trans_line_master ac_line ON ckt.line_id = ac_line.id
+                    LEFT JOIN (
+                        SELECT LISTAGG(own.owner_name, ',') WITHIN GROUP (
                                 ORDER BY owner_name
                             ) AS owners,
-                            parent_entity_attribute_id as element_id
-                        from REPORTING_WEB_UI_UAT.entity_entity_reln ent_reln
-                            left join REPORTING_WEB_UI_UAT.owner own on own.id = ent_reln.child_entity_attribute_id
-                        where ent_reln.CHILD_ENTITY = 'OWNER'
-                            and ent_reln.parent_entity = 'AC_TRANSMISSION_LINE'
-                            and ent_reln.CHILD_ENTITY_ATTRIBUTE = 'OwnerId'
-                            and ent_reln.PARENT_ENTITY_ATTRIBUTE = 'Owner'
-                        group by parent_entity_attribute_id
-                    ) owner_details on owner_details.element_id = ac_line.id where ckt.id in {0}'''.format(reqIdsTxt)
+                            parent_entity_attribute_id AS element_id
+                        FROM REPORTING_WEB_UI_UAT.entity_entity_reln ent_reln
+                            LEFT JOIN REPORTING_WEB_UI_UAT.owner own ON own.id = ent_reln.child_entity_attribute_id
+                        WHERE ent_reln.CHILD_ENTITY = 'OWNER'
+                            AND ent_reln.parent_entity = 'AC_TRANSMISSION_LINE'
+                            AND ent_reln.CHILD_ENTITY_ATTRIBUTE = 'OwnerId'
+                            AND ent_reln.PARENT_ENTITY_ATTRIBUTE = 'Owner'
+                        GROUP BY parent_entity_attribute_id
+                    ) owner_details ON owner_details.element_id = ac_line.id WHERE ckt.id IN {0}'''.format(reqIdsTxt)
 
     cur = con.cursor()
     cur.execute(fetchSql, [])
