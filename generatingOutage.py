@@ -3,7 +3,6 @@ import pandas as pd
 import datetime as dt
 import numpy as np
 from src.appConfig import getConfig
-
 def time_formatter(string):
 	if string:
 		if '.' in string:
@@ -510,7 +509,6 @@ def getOwnersForHvdcPoleIds(reportsConnStr, ids):
         ownersDict[row[0]] = row[1]
     return ownersDict
 
-
 def getOwnersForLineReactorIds(reportsConnStr, ids):
     l=len(ids)
     if len(ids) == 0:
@@ -609,7 +607,6 @@ def getOwnersForTransformerIds(reportsConnStr, ids):
 		ownersDict[row[0]] = row[1]
 	return ownersDict
 
-
 try:
 	appConfig=getConfig()
 	remote,local=appConfig['remoteConStr'],appConfig['localConStr']
@@ -619,11 +616,23 @@ try:
 	cur2=con2.cursor()
 	print(con.version,con2.version)
 	
-	outagesFetchSql='''select rto.ID as pwc_id, rto.ELEMENT_ID,rto.ELEMENTNAME as ELEMENT_NAME,rto.ENTITY_ID, ent_master.ENTITY_NAME,
-	gen_unit.installed_capacity as CAPACITY,rto.OUTAGE_DATE as OUTAGE_DATETIME,rto.REVIVED_DATE as REVIVED_DATETIME, rto.CREATED_DATE as CREATED_DATETIME, 
-    rto.MODIFIED_DATE as MODIFIED_DATETIME, sd_tag.name as shutdown_tag,rto.SHUTDOWN_TAG_ID,sd_type.name as shutdown_typename,
-    rto.SHUT_DOWN_TYPE as SHUT_DOWN_TYPE_ID, rto.OUTAGE_REMARKS,reas.reason,rto.REASON_ID, rto.REVIVAL_REMARKS, rto.REGION_ID,rto.SHUTDOWNREQUEST_ID,
-    rto.OUTAGE_TIME, rto.REVIVED_TIME from REPORTING_WEB_UI_UAT.real_time_outage rto 
+	outagesFetchSql='''SELECT rto.ID as pwc_id,
+    rto.ELEMENT_ID,rto.ELEMENTNAME as ELEMENT_NAME,
+    rto.ENTITY_ID, ent_master.ENTITY_NAME,
+	gen_unit.installed_capacity as CAPACITY,
+    rto.OUTAGE_DATE as OUTAGE_DATETIME,rto.REVIVED_DATE as REVIVED_DATETIME, 
+    rto.CREATED_DATE as CREATED_DATETIME, 
+    rto.MODIFIED_DATE as MODIFIED_DATETIME, sd_tag.name as shutdown_tag,
+    rto.SHUTDOWN_TAG_ID,
+    sd_type.name as shutdown_typename,
+    rto.SHUT_DOWN_TYPE as SHUT_DOWN_TYPE_ID, 
+    rto.OUTAGE_REMARKS,rto.REASON_ID,
+    reas.reason, rto.REVIVAL_REMARKS, 
+    rto.REGION_ID,
+    rto.SHUTDOWNREQUEST_ID,
+    rto.OUTAGE_TIME, 
+    rto.REVIVED_TIME 
+    from REPORTING_WEB_UI_UAT.real_time_outage rto 
     left join REPORTING_WEB_UI_UAT.outage_reason reas on reas.id = rto.reason_id
     left join REPORTING_WEB_UI_UAT.shutdown_outage_tag sd_tag on sd_tag.id = rto.shutdown_tag_id
     left join REPORTING_WEB_UI_UAT.shutdown_outage_type sd_type on sd_type.id = rto.shut_down_type
@@ -687,7 +696,7 @@ try:
 	    # convert installed capacity to string
 	    instCap = dbRows[rIter][instCapIndex]
 	    if elemType == 'GENERATING_UNIT':
-	        instCap = str(instCap)
+	        instCap = str(int(instCap))
 	    else:
 	        instCap = extractVoltFromName(elemName)
 	    dbRows[rIter][instCapIndex] = instCap

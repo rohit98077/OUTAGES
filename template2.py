@@ -3,10 +3,18 @@ from docxtpl import DocxTemplate, InlineImage
 import datetime as dt
 import cx_Oracle
 
-def fetchGenUnitOutages(con):
+def fetchGenUnitOutages(con,stDate,endDate):
     cur=con.cursor()
-    sqlFetch='''select oe.ELEMENT_NAME,oe.OWNERS, oe.CAPACITY,oe.OUTAGE_DATETIME, oe.REVIVED_DATETIME,
-    oe.OUTAGE_REMARKS, oe.REASON,oe.shutdown_tag from outage_events oe
+    sqlFetch='''
+    SELECT oe.ELEMENT_NAME,
+    oe.OWNERS,
+    oe.CAPACITY,
+    oe.OUTAGE_DATETIME,
+    oe.REVIVED_DATETIME,
+    oe.OUTAGE_REMARKS,
+    oe.REASON,
+    oe.shutdown_tag 
+    from outage_events oe
     where (oe.entity_name = 'GENERATING_UNIT') and 
     (
         (oe.OUTAGE_DATETIME between :1 and :2) 
@@ -14,7 +22,8 @@ def fetchGenUnitOutages(con):
         or (oe.OUTAGE_DATETIME <= :1 and oe.REVIVED_DATETIME >= :2)
         or (oe.OUTAGE_DATETIME <= :1 and oe.REVIVED_DATETIME IS NULL)
     ) order by oe.OUTAGE_DATETIME desc'''
-    cur.execute(sqlFetch,(dt.datetime(2019,7,2),dt.datetime(2019,7,3)))
+    
+    cur.execute(sqlFetch,(stDate,endDate))
     res=cur.fetchall()
     colNames=[r[0] for r in cur.description]
     col=['elName','owners','capacity','outageTime','outageDate','revivalTime','revivalDate','reason' ]
@@ -39,10 +48,16 @@ def fetchGenUnitOutages(con):
     lstOfDict=[dict(zip(col,r)) for r in lst]
     return lstOfDict
 
-def fetchTransElOutages(con):
+def fetchTransElOutages(con,stDate,endDate):
     cur=con.cursor()
-    sqlFetch='''select oe.ELEMENT_NAME,oe.OWNERS, oe.CAPACITY,oe.OUTAGE_DATETIME, oe.REVIVED_DATETIME,
-    oe.OUTAGE_REMARKS, oe.REASON,oe.shutdown_tag from outage_events oe
+    sqlFetch='''
+    SELECT oe.ELEMENT_NAME,
+    oe.OWNERS, oe.CAPACITY,
+    oe.OUTAGE_DATETIME, 
+    oe.REVIVED_DATETIME,
+    oe.OUTAGE_REMARKS, 
+    oe.REASON,oe.shutdown_tag 
+    from outage_events oe
     where (oe.entity_name != 'GENERATING_UNIT') and 
     (
         (oe.OUTAGE_DATETIME between :1 and :2) 
@@ -50,7 +65,7 @@ def fetchTransElOutages(con):
         or (oe.OUTAGE_DATETIME <= :1 and oe.REVIVED_DATETIME >= :2)
         or (oe.OUTAGE_DATETIME <= :1 and oe.REVIVED_DATETIME IS NULL)
     ) order by oe.OUTAGE_DATETIME desc'''
-    cur.execute(sqlFetch,(dt.datetime(2019,7,2),dt.datetime(2019,7,3)))
+    cur.execute(sqlFetch,(stDate,endDate))
     res=cur.fetchall()
     colNames=[r[0] for r in cur.description]
     # print(colNames)
@@ -76,16 +91,23 @@ def fetchTransElOutages(con):
     lstOfDict=[dict(zip(col,r)) for r in lst]
     return lstOfDict
 
-def fetchlongTimeUnrevivedForcedOutages(con):
+def fetchlongTimeUnrevivedForcedOutages(con,stDate,endDate):
     cur=con.cursor()
-    sqlFetch='''select oe.ELEMENT_NAME,oe.OWNERS, oe.CAPACITY,oe.OUTAGE_DATETIME, oe.REVIVED_DATETIME,
-    oe.OUTAGE_REMARKS, oe.REASON,oe.shutdown_tag from outage_events oe
+    sqlFetch='''
+    SELECT oe.ELEMENT_NAME,
+    oe.OWNERS, oe.CAPACITY,
+    oe.OUTAGE_DATETIME, 
+    oe.REVIVED_DATETIME,
+    oe.OUTAGE_REMARKS, 
+    oe.REASON,
+    oe.shutdown_tag 
+    from outage_events oe
     where (oe.shutdown_typename = 'FORCED') and 
     (oe.OUTAGE_DATETIME < :1) and ((oe.REVIVED_DATETIME IS NULL) or (oe.REVIVED_DATETIME>:1)) and
     ((:1 - oe.OUTAGE_DATETIME) > INTERVAL '180' DAY(3)) 
     order by oe.OUTAGE_DATETIME'''
 
-    cur.execute(sqlFetch,(dt.datetime(2019,7,2),dt.datetime(2019,7,3)))
+    cur.execute(sqlFetch,(endDate,))
     res=cur.fetchall()
     colNames=[r[0] for r in cur.description]
     # print(colNames)
@@ -114,17 +136,18 @@ def fetchlongTimeUnrevivedForcedOutages(con):
     lstOfDict=[dict(zip(col,r)) for r in lst]
     return lstOfDict
 
-def get_context():
-    con=cx_Oracle.connect('system/12345678@localhost:1521/xe')
+def get_context(stDate,endDate):
+    # con=cx_Oracle.connect('system/12345678@localhost:1521/xe')
+    con=cx_Oracle.connect("mis_warehouse","wrldc#123","10.2.100.56:15210/ORCLWR")
     return {
-    'genOtgs':fetchGenUnitOutages(con),
-    'transOtgs':fetchTransElOutages(con),
-    'longTimeOtgs':fetchlongTimeUnrevivedForcedOutages(con)
+    'genOtgs':fetchGenUnitOutages(con,stDate,endDate),
+    'transOtgs':fetchTransElOutages(con,stDate,endDate),
+    'longTimeOtgs':fetchlongTimeUnrevivedForcedOutages(con,stDate,endDate)
     }
 
 template = DocxTemplate('outageTemplate.docx')
-context = get_context()  # gets the context used to render the document
+context = get_context(dt.datetime(2020,9,10),dt.datetime(2020,9,17))  # gets the context used to render the document
 # img_size = Cm(7)  # sets the size of the image
 # context['signature'] = InlineImage(template, 'signature.png', img_size)  # adds the InlineImage object to the context
 template.render(context)
-template.save('testReport.docx')
+template.save('testReport20.docx')
